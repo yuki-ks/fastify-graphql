@@ -1,4 +1,4 @@
-const fastify = require('fastify')();
+const fastify = require('fastify');
 const mercurius = require('mercurius');
 
 const dogs = [{
@@ -95,31 +95,33 @@ const loaders = {
   }
 }
 
-/*
-fastify.register(require('@fastify/mysql'), {
-  connectionString: 'mysql://root@localhost/mysql'
-});
-*/
+function init() {
+  const app = fastify();
 
-fastify.register(mercurius, {
-  schema,
-  resolvers,
-  loaders,
-  graphiql: true
-})
+  app.register(require('@fastify/mysql'), {
+    connectionString: 'mysql://root@localhost/mysql'
+  });
 
-fastify.get('/', async function (request, reply) {
-  const query = '{ test(x: 2, y: 2) }';
-  return reply.graphql(query);
-});
+  app.register(mercurius, {
+    schema,
+    resolvers,
+    loaders,
+    graphiql: true
+  })
 
-const start = async () => {
-  try {
-    await fastify.listen({ port: 3000 });
-  } catch (err) {
-    process.exit(1);
-  }
+  app.get('/', async function (request, reply) {
+    const query = '{ test(x: 2, y: 2) }';
+    return reply.graphql(query);
+  });
+
+  return app;
 }
 
-start();
-
+if (require.main === module) {
+  init().listen({ port: 3000 }, err => {
+    if (err) console.log(err);
+    console.log('server listening on 3000');
+  });
+} else {
+  module.exports = init;
+}
